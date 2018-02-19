@@ -7,6 +7,7 @@ var bodyParser = require('body-parser');
 const expressValidator = require('express-validator');
 
 const session = require('express-session');
+const passport = require('passport');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -32,6 +33,9 @@ app.use(session({
   saveUninitialized: false, // cookie only when authorized
   // cookie: { secure: true }
 }))
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(expressValidator()) // must be immed. after bodyParser
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));

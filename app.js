@@ -8,13 +8,14 @@ const expressValidator = require('express-validator');
 
 const session = require('express-session');
 const passport = require('passport');
+// session will be canceled only with logout, not after node restart
+const MySQLStore = require('express-mysql-session')(session); 
+const LocalStrategy = require('passport-local').Strategy;
 
 var index = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
-
-
 
 require('dotenv').config();
 
@@ -27,21 +28,40 @@ app.set('view engine', 'hbs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(session({
-  secret: 'rAnd0m $trINg',
-  resave: false,
-  saveUninitialized: false, // cookie only when authorized
-  // cookie: { secure: true }
-}))
-app.use(passport.initialize());
-app.use(passport.session());
 
 app.use(expressValidator()) // must be immed. after bodyParser
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const options = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database : process.env.DB_NAME
+}
+const sessionStore = new MySQLStore(options);
+
+app.use(session({
+  secret: 'rAnd0m $trINg',
+  resave: false,
+  store: sessionStore,
+  saveUninitialized: false, // cookie only when authorized
+  // cookie: { secure: true }
+}))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', index);
 app.use('/users', users);
+
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    console.log('Pswd localstrat:', username, password);
+    const db = require('./db');
+    return done(null, 'tempString');
+  }
+));
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

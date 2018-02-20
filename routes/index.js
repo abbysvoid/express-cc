@@ -11,12 +11,13 @@ router.get('/register', function(req, res, next) {
 });
 
 router.get('/', function(req, res, next) {
+  console.log('user:', req.user);
+  console.log('is authcd:', req.isAuthenticated());
   res.render('home', { title: 'Home' });
 });
 
 
-router.post('/register', function(req, res, next) {
-
+router.post('/register', function(req, res, next) {``
   req.checkBody('username', 'Usarname cannot be empty').notEmpty();
   req.checkBody('username', 'Username must be between 3-15 characters long.').len(3, 15);
   req.checkBody('email', 'The email you entered is invalid, please try again.').isEmail();
@@ -42,6 +43,7 @@ router.post('/register', function(req, res, next) {
 
     const db = require('../db.js')
     bcrypt.hash(password, saltRounds, function(err, hash) {
+      console.log('HASH:', hash)
       db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', 
           [username, email, hash], (err, result, fields) => {
         if (err) throw err;
@@ -53,12 +55,11 @@ router.post('/register', function(req, res, next) {
           }
           else {
             const user_id = result[0];
-            console.log(result[0]);
+            console.log('user_id:', user_id);
             // this comes from passport and creates session for user
             req.login(user_id, (err)=> {
               res.redirect('/');
             })
-            res.render('register', {title: 'Registration Complete'});
           }
         })
       });

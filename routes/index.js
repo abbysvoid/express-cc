@@ -4,7 +4,7 @@ const expressValidator = require('express-validator');
 const passport = require('passport');
 const bcrypt = require('bcrypt');
 
-saltRounds = 10;
+const saltRounds = 10;
 
 router.get('/login', function(req, res) {
   res.render('login', {title: 'Login'});
@@ -15,6 +15,12 @@ router.post('/login', passport.authenticate('local', {
     failureRedirect: '/login',
   })
 );
+
+router.get('/logout', function(req, res) {
+  req.logout();
+  req.session.destroy();
+  res.redirect('/');
+});
 
 router.get('/register', function(req, res, next) {
   res.render('register', {title: 'Registration'});
@@ -29,7 +35,7 @@ router.get('/', function(req, res, next) {
 router.get('/profile', authenticationMiddleware(), function(req, res, next) {
   console.log('user:', req.user);
   console.log('is authcd:', req.isAuthenticated());
-  res.render('profile', {title: 'Profile'});
+  res.render('profile', {title: 'Profile', user: req.user});
 });
 
 router.post('/register', function(req, res, next) {

@@ -11,6 +11,7 @@ const passport = require('passport');
 // session will be canceled only with logout, not after node restart
 const MySQLStore = require('express-mysql-session')(session); 
 const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
@@ -59,7 +60,27 @@ passport.use(new LocalStrategy(
   function(username, password, done) {
     console.log('Pswd localstrat:', username, password);
     const db = require('./db');
-    return done(null, 'tempString');
+    db.query('SELECT password FROM users where username = ?',
+      [username], (err, results, fields) => {
+        if (err) {console.log('EEE!'); done(err)} // done provided by passport
+        console.log('DBres:', results);
+        if (results.length === 0) {
+          done(null, false);
+        } else {
+          console.log('Going on...')
+          const hash = results[0].password.toString();
+          console.log("HASH:", hash)
+          bcrypt.compare(password, hash, (err, response) => {
+            if (response === true) {
+              console.log('AUTHENTCD', username);
+              return done(null, username)
+            } else {
+              console.log('REJECTED', username);
+              return done(null, false);
+            }
+          })
+        }
+      })
   }
 ));
 
